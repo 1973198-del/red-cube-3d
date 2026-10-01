@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Red Cube Runner</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <div class="hud">
+        <span class="tag">Endless Run</span>
+        <h1>Red Cube</h1>
+        <p>Reach the glowing finish gate.</p>
+      </div>
+
+      <div class="scene" aria-label="A red cube moving forward toward the end goal">
+        <div class="sky-glow"></div>
+        <div class="track">
+          <div class="track-lights"></div>
+          <div class="start-zone">START</div>
+          <div class="finish-zone">END</div>
+          <div class="goal-gate">
+            <div class="gate-core"></div>
+          </div>
+
+          <div class="runner" aria-hidden="true">
+            <div class="cube">
+              <div class="face front"></div>
+              <div class="face back"></div>
+              <div class="face left"></div>
+              <div class="face right"></div>
+              <div class="face top"></div>
+              <div class="face bottom"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
