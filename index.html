@@ -3,28 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Red Cube Runner</title>
+    <title>Red Cube Escape</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main class="game-shell">
-      <div class="hud">
-        <span class="tag">Endless Run</span>
-        <h1>Red Cube</h1>
-        <p>Reach the glowing finish gate.</p>
+    <input type="radio" name="move" id="move-left" />
+    <input type="radio" name="move" id="move-right" />
+    <input type="radio" name="move" id="move-forward" />
+    <input type="radio" name="move" id="move-backward" />
+    <input type="radio" name="move" id="move-escape" />
+
+    <div class="page">
+      <header class="hud">
+        <p class="tag">Level 02</p>
+        <h1>Red Cube Escape</h1>
+        <p class="subtitle">A corridor run to freedom</p>
+      </header>
+
+      <div class="controls" aria-label="Game controls">
+        <label for="move-left">Left</label>
+        <label for="move-forward">Forward</label>
+        <label for="move-right">Right</label>
+        <label for="move-backward">Back</label>
+        <label for="move-escape">Escape</label>
       </div>
 
-      <div class="scene" aria-label="A red cube moving forward toward the end goal">
-        <div class="sky-glow"></div>
-        <div class="track">
-          <div class="track-lights"></div>
-          <div class="start-zone">START</div>
-          <div class="finish-zone">END</div>
-          <div class="goal-gate">
-            <div class="gate-core"></div>
-          </div>
+      <div class="status" aria-live="polite">
+        <span class="label">Objective</span>
+        <span class="value">Reach the exit gate</span>
+      </div>
 
-          <div class="runner" aria-hidden="true">
+      <div class="level-panel">
+        <div class="maze" aria-label="Maze level with a red cube and exit gate">
+          <div class="wall wall-a"></div>
+          <div class="wall wall-b"></div>
+          <div class="wall wall-c"></div>
+          <div class="wall wall-d"></div>
+          <div class="wall wall-e"></div>
+          <div class="wall wall-f"></div>
+
+          <div class="exit-door"></div>
+
+          <div class="player" aria-hidden="true">
             <div class="cube">
               <div class="face front"></div>
               <div class="face back"></div>
@@ -36,6 +56,6 @@
           </div>
         </div>
       </div>
-    </main>
+    </div>
   </body>
 </html>

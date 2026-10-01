@@ -1,19 +1,17 @@
-# Red Cube Runner
+# Red Cube Escape
 
-A lightweight 3D-style experience where a red cube keeps moving forward and must reach the end gate.
+A CSS-only 3D styled maze game where the red cube moves through a corridor and tries to escape the level.
 
 ## Features
-- HTML + CSS only
-- No JavaScript used
-- 3D cube model with animated movement
-- Goal gate at the finish line
-- Responsive layout
+- No JavaScript
+- 3D cube model with forward direction cue
+- Movement controls for left, right, forward, and backward
+- Escape objective and a second level-style maze layout
 
-## Run it
-1. Open `index.html` in a browser, or
-2. Serve the folder locally with a static file server.
+## Run
+Open the `index.html` file in any browser.
 
-Example:
+You can also serve it locally:
 
 ```bash
 python3 -m http.server 8000
@@ -21,6 +19,12 @@ python3 -m http.server 8000
 
 Then visit http://localhost:8000
 
-## Files
-- `index.html` – page structure
-- `style.css` – cube, scene, and animation styling
+## Controls
+- Left
+- Forward
+- Right
+- Back
+- Escape
+
+The cube direction is shown by the arrow above it, and the goal is to reach the glowing exit gate.
+
