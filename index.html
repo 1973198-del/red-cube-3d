@@ -3,48 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Red Cube Escape</title>
+    <title>Red Cube Runner</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <input type="radio" name="move" id="move-left" />
-    <input type="radio" name="move" id="move-right" />
-    <input type="radio" name="move" id="move-forward" />
-    <input type="radio" name="move" id="move-backward" />
-    <input type="radio" name="move" id="move-escape" />
-
     <div class="page">
       <header class="hud">
-        <p class="tag">Level 02</p>
-        <h1>Red Cube Escape</h1>
-        <p class="subtitle">A corridor run to freedom</p>
+        <p class="tag">Forward Runner</p>
+        <h1>Red Cube</h1>
+        <p class="subtitle">Dodge obstacles and reach the end</p>
       </header>
 
-      <div class="controls" aria-label="Game controls">
-        <label for="move-left">Left</label>
-        <label for="move-forward">Forward</label>
-        <label for="move-right">Right</label>
-        <label for="move-backward">Back</label>
-        <label for="move-escape">Escape</label>
-      </div>
+      <div class="game-container">
+        <div class="game-viewport">
+          <div class="road">
+            <div class="road-lane left-lane"></div>
+            <div class="road-lane center-lane"></div>
+            <div class="road-lane right-lane"></div>
+          </div>
 
-      <div class="status" aria-live="polite">
-        <span class="label">Objective</span>
-        <span class="value">Reach the exit gate</span>
-      </div>
+          <div class="obstacles-container" id="obstacles"></div>
 
-      <div class="level-panel">
-        <div class="maze" aria-label="Maze level with a red cube and exit gate">
-          <div class="wall wall-a"></div>
-          <div class="wall wall-b"></div>
-          <div class="wall wall-c"></div>
-          <div class="wall wall-d"></div>
-          <div class="wall wall-e"></div>
-          <div class="wall wall-f"></div>
-
-          <div class="exit-door"></div>
-
-          <div class="player" aria-hidden="true">
+          <div class="player">
             <div class="cube">
               <div class="face front"></div>
               <div class="face back"></div>
@@ -54,10 +34,175 @@
               <div class="face bottom"></div>
             </div>
           </div>
+
+          <div class="hud-ingame">
+            <div class="score">Distance: <span id="distance">0</span>m</div>
+            <div class="controls-hint">Use A/D to move left/right</div>
+          </div>
         </div>
       </div>
 
       <div class="credit">Made by Ahmed</div>
     </div>
+
+    <style>
+      /* Game Logic Styles */
+      body.game-over .game-viewport::after {
+        content: "GAME OVER";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: bold;
+        color: #ff6b6b;
+        text-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+        z-index: 100;
+      }
+
+      body.game-complete .game-viewport::after {
+        content: "YOU ESCAPED!";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: bold;
+        color: #74f3ff;
+        text-shadow: 0 0 20px rgba(116, 243, 255, 0.8);
+        z-index: 100;
+      }
+    </style>
+
+    <script>
+      // Game State
+      const gameState = {
+        playerPosition: 1, // 0 = left, 1 = center, 2 = right
+        distance: 0,
+        gameRunning: true,
+        gameSpeed: 8,
+        spawnRate: 0.08
+      };
+
+      const keyState = {
+        a: false,
+        d: false
+      };
+
+      // Get DOM elements
+      const obstaclesContainer = document.getElementById('obstacles');
+      const distanceDisplay = document.getElementById('distance');
+      const playerElement = document.querySelector('.player');
+      const gameViewport = document.querySelector('.game-viewport');
+
+      // Keyboard controls
+      document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'a') {
+          keyState.a = true;
+          e.preventDefault();
+        }
+        if (e.key.toLowerCase() === 'd') {
+          keyState.d = true;
+          e.preventDefault();
+        }
+      });
+
+      document.addEventListener('keyup', (e) => {
+        if (e.key.toLowerCase() === 'a') keyState.a = false;
+        if (e.key.toLowerCase() === 'd') keyState.d = false;
+      });
+
+      // Update player position
+      function updatePlayer() {
+        if (keyState.a && gameState.playerPosition > 0) {
+          gameState.playerPosition--;
+        }
+        if (keyState.d && gameState.playerPosition < 2) {
+          gameState.playerPosition++;
+        }
+
+        // Set position
+        const positions = ['translateX(-100px)', 'translateX(0)', 'translateX(100px)'];
+        playerElement.style.transform = positions[gameState.playerPosition];
+      }
+
+      // Spawn obstacles
+      function spawnObstacle() {
+        if (Math.random() > gameState.spawnRate) return;
+
+        const obstacle = document.createElement('div');
+        obstacle.className = 'obstacle';
+        const lane = Math.floor(Math.random() * 3);
+        obstacle.style.left = (lane * 100 + 50) + 'px';
+        obstacle.dataset.lane = lane;
+        obstacle.dataset.position = 0;
+
+        obstaclesContainer.appendChild(obstacle);
+      }
+
+      // Move obstacles
+      function moveObstacles() {
+        const obstacles = document.querySelectorAll('.obstacle');
+        obstacles.forEach((obstacle) => {
+          let pos = parseFloat(obstacle.dataset.position);
+          pos += gameState.gameSpeed;
+          obstacle.dataset.position = pos;
+          obstacle.style.top = pos + 'px';
+
+          // Remove obstacle when off screen
+          if (pos > 600) {
+            obstacle.remove();
+            gameState.distance += 10;
+            distanceDisplay.textContent = gameState.distance;
+          }
+
+          // Check collision
+          checkCollision(obstacle);
+        });
+      }
+
+      // Collision detection
+      function checkCollision(obstacle) {
+        const obsLane = parseInt(obstacle.dataset.lane);
+        const obsPos = parseFloat(obstacle.dataset.position);
+
+        // Collision zone at bottom
+        if (obsPos > 480 && obsPos < 580) {
+          if (obsLane === gameState.playerPosition) {
+            gameState.gameRunning = false;
+            document.body.classList.add('game-over');
+            obstaclesContainer.innerHTML = '';
+          }
+        }
+
+        // Success zone
+        if (obsPos > 580 && obsLane === gameState.playerPosition) {
+          if (gameState.distance >= 1000) {
+            gameState.gameRunning = false;
+            document.body.classList.add('game-complete');
+          }
+        }
+      }
+
+      // Game loop
+      function gameLoop() {
+        if (!gameState.gameRunning) return;
+
+        updatePlayer();
+        spawnObstacle();
+        moveObstacles();
+
+        // Increase difficulty
+        if (gameState.distance % 200 === 0 && gameState.distance > 0) {
+          gameState.gameSpeed += 0.5;
+          gameState.spawnRate += 0.01;
+        }
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Start game
+      gameLoop();
+    </script>
   </body>
 </html>
