@@ -7,24 +7,26 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="page">
-      <header class="hud">
-        <p class="tag">Forward Runner</p>
+    <div class="game-shell">
+      <div class="hud">
+        <div class="tag">Subway Surfers Style</div>
         <h1>Red Cube</h1>
-        <p class="subtitle">Dodge obstacles and reach the end</p>
-      </header>
+        <div class="subtitle">Escape the rails</div>
+      </div>
 
-      <div class="game-container">
-        <div class="game-viewport">
-          <div class="road">
-            <div class="road-lane left-lane"></div>
-            <div class="road-lane center-lane"></div>
-            <div class="road-lane right-lane"></div>
+      <div class="game-wrap">
+        <div id="game" class="game" aria-label="Red cube runner game">
+          <div class="sky-glow"></div>
+          <div class="track">
+            <div class="lane lane-1"></div>
+            <div class="lane lane-2"></div>
+            <div class="lane lane-3"></div>
           </div>
 
-          <div class="obstacles-container" id="obstacles"></div>
+          <div id="coins" class="coins"></div>
+          <div id="obstacles" class="obstacles"></div>
 
-          <div class="player">
+          <div id="player" class="player" aria-label="Red cube player">
             <div class="cube">
               <div class="face front"></div>
               <div class="face back"></div>
@@ -35,174 +37,165 @@
             </div>
           </div>
 
-          <div class="hud-ingame">
-            <div class="score">Distance: <span id="distance">0</span>m</div>
-            <div class="controls-hint">Use A/D to move left/right</div>
+          <div class="game-ui">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="best">Best: <span id="best">0</span></div>
           </div>
+
+          <div id="message" class="message hidden">Game Over</div>
         </div>
       </div>
 
       <div class="credit">Made by Ahmed</div>
     </div>
 
-    <style>
-      /* Game Logic Styles */
-      body.game-over .game-viewport::after {
-        content: "GAME OVER";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 3rem;
-        font-weight: bold;
-        color: #ff6b6b;
-        text-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
-        z-index: 100;
-      }
-
-      body.game-complete .game-viewport::after {
-        content: "YOU ESCAPED!";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 3rem;
-        font-weight: bold;
-        color: #74f3ff;
-        text-shadow: 0 0 20px rgba(116, 243, 255, 0.8);
-        z-index: 100;
-      }
-    </style>
-
     <script>
-      // Game State
-      const gameState = {
-        playerPosition: 1, // 0 = left, 1 = center, 2 = right
-        distance: 0,
-        gameRunning: true,
-        gameSpeed: 8,
-        spawnRate: 0.08
+      const game = document.getElementById('game');
+      const playerEl = document.getElementById('player');
+      const obstaclesEl = document.getElementById('obstacles');
+      const coinsEl = document.getElementById('coins');
+      const scoreEl = document.getElementById('score');
+      const bestEl = document.getElementById('best');
+      const messageEl = document.getElementById('message');
+
+      const lanePositions = [-120, 0, 120];
+      const state = {
+        lane: 1,
+        score: 0,
+        best: Number(localStorage.getItem('redCubeBest') || 0),
+        speed: 4.5,
+        lastTime: 0,
+        obstacles: [],
+        coins: [],
+        gameOver: false,
       };
 
-      const keyState = {
-        a: false,
-        d: false
-      };
+      bestEl.textContent = state.best;
+      renderPlayer();
 
-      // Get DOM elements
-      const obstaclesContainer = document.getElementById('obstacles');
-      const distanceDisplay = document.getElementById('distance');
-      const playerElement = document.querySelector('.player');
-      const gameViewport = document.querySelector('.game-viewport');
+      window.addEventListener('keydown', (event) => {
+        const key = event.key.toLowerCase();
+        if (state.gameOver) return;
 
-      // Keyboard controls
-      document.addEventListener('keydown', (e) => {
-        if (e.key.toLowerCase() === 'a') {
-          keyState.a = true;
-          e.preventDefault();
+        if (key === 'a') {
+          state.lane = Math.max(0, state.lane - 1);
         }
-        if (e.key.toLowerCase() === 'd') {
-          keyState.d = true;
-          e.preventDefault();
+
+        if (key === 'd') {
+          state.lane = Math.min(2, state.lane + 1);
         }
+
+        renderPlayer();
       });
 
-      document.addEventListener('keyup', (e) => {
-        if (e.key.toLowerCase() === 'a') keyState.a = false;
-        if (e.key.toLowerCase() === 'd') keyState.d = false;
-      });
-
-      // Update player position
-      function updatePlayer() {
-        if (keyState.a && gameState.playerPosition > 0) {
-          gameState.playerPosition--;
-        }
-        if (keyState.d && gameState.playerPosition < 2) {
-          gameState.playerPosition++;
-        }
-
-        // Set position
-        const positions = ['translateX(-100px)', 'translateX(0)', 'translateX(100px)'];
-        playerElement.style.transform = positions[gameState.playerPosition];
+      function renderPlayer() {
+        playerEl.style.transform = `translateX(${lanePositions[state.lane]}px)`;
       }
 
-      // Spawn obstacles
       function spawnObstacle() {
-        if (Math.random() > gameState.spawnRate) return;
-
+        const lane = Math.floor(Math.random() * 3);
         const obstacle = document.createElement('div');
         obstacle.className = 'obstacle';
+        obstacle.style.left = `${lanePositions[lane]}px`;
+        obstacle.style.top = '-90px';
+        obstaclesEl.appendChild(obstacle);
+
+        state.obstacles.push({ lane, y: -90, el: obstacle, size: 72 });
+      }
+
+      function spawnCoin() {
         const lane = Math.floor(Math.random() * 3);
-        obstacle.style.left = (lane * 100 + 50) + 'px';
-        obstacle.dataset.lane = lane;
-        obstacle.dataset.position = 0;
+        const coin = document.createElement('div');
+        coin.className = 'coin';
+        coin.style.left = `${lanePositions[lane]}px`;
+        coin.style.top = '-28px';
+        coinsEl.appendChild(coin);
 
-        obstaclesContainer.appendChild(obstacle);
+        state.coins.push({ lane, y: -28, el: coin, size: 24 });
       }
 
-      // Move obstacles
-      function moveObstacles() {
-        const obstacles = document.querySelectorAll('.obstacle');
-        obstacles.forEach((obstacle) => {
-          let pos = parseFloat(obstacle.dataset.position);
-          pos += gameState.gameSpeed;
-          obstacle.dataset.position = pos;
-          obstacle.style.top = pos + 'px';
+      function updateObstacles() {
+        for (let i = state.obstacles.length - 1; i >= 0; i--) {
+          const item = state.obstacles[i];
+          item.y += state.speed;
+          item.el.style.top = `${item.y}px`;
 
-          // Remove obstacle when off screen
-          if (pos > 600) {
-            obstacle.remove();
-            gameState.distance += 10;
-            distanceDisplay.textContent = gameState.distance;
+          if (item.y > 760) {
+            item.el.remove();
+            state.obstacles.splice(i, 1);
+            continue;
           }
 
-          // Check collision
-          checkCollision(obstacle);
-        });
-      }
+          const collision =
+            item.lane === state.lane &&
+            item.y + item.size > 620 &&
+            item.y < 700;
 
-      // Collision detection
-      function checkCollision(obstacle) {
-        const obsLane = parseInt(obstacle.dataset.lane);
-        const obsPos = parseFloat(obstacle.dataset.position);
-
-        // Collision zone at bottom
-        if (obsPos > 480 && obsPos < 580) {
-          if (obsLane === gameState.playerPosition) {
-            gameState.gameRunning = false;
-            document.body.classList.add('game-over');
-            obstaclesContainer.innerHTML = '';
-          }
-        }
-
-        // Success zone
-        if (obsPos > 580 && obsLane === gameState.playerPosition) {
-          if (gameState.distance >= 1000) {
-            gameState.gameRunning = false;
-            document.body.classList.add('game-complete');
+          if (collision) {
+            endGame();
+            return;
           }
         }
       }
 
-      // Game loop
-      function gameLoop() {
-        if (!gameState.gameRunning) return;
+      function updateCoins() {
+        for (let i = state.coins.length - 1; i >= 0; i--) {
+          const item = state.coins[i];
+          item.y += state.speed;
+          item.el.style.top = `${item.y}px`;
 
-        updatePlayer();
-        spawnObstacle();
-        moveObstacles();
+          if (item.y > 760) {
+            item.el.remove();
+            state.coins.splice(i, 1);
+            continue;
+          }
 
-        // Increase difficulty
-        if (gameState.distance % 200 === 0 && gameState.distance > 0) {
-          gameState.gameSpeed += 0.5;
-          gameState.spawnRate += 0.01;
+          const collected =
+            item.lane === state.lane &&
+            item.y + item.size > 620 &&
+            item.y < 700;
+
+          if (collected) {
+            item.el.remove();
+            state.coins.splice(i, 1);
+            state.score += 10;
+            scoreEl.textContent = Math.floor(state.score);
+            if (state.score > state.best) {
+              state.best = state.score;
+              bestEl.textContent = Math.floor(state.best);
+              localStorage.setItem('redCubeBest', String(Math.floor(state.best)));
+            }
+          }
         }
-
-        requestAnimationFrame(gameLoop);
       }
 
-      // Start game
-      gameLoop();
+      function endGame() {
+        state.gameOver = true;
+        messageEl.classList.remove('hidden');
+        messageEl.textContent = 'Game Over';
+        messageEl.classList.add('game-over');
+      }
+
+      function tick(timestamp) {
+        if (!state.gameOver) {
+          const delta = timestamp - state.lastTime || 16;
+          state.lastTime = timestamp;
+
+          state.speed += 0.0008 * delta;
+          state.score += 0.5;
+          scoreEl.textContent = Math.floor(state.score);
+
+          if (Math.random() < 0.026) spawnObstacle();
+          if (Math.random() < 0.018) spawnCoin();
+
+          updateObstacles();
+          updateCoins();
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
     </script>
   </body>
 </html>
